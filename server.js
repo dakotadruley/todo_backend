@@ -37,10 +37,10 @@ app.post('/api/todos', async (req, res) => {
 
         const result = await client.query(`
         insert into todos (task, complete)
-        values ($1, $2)
+        values ($1, false)
         returning *;`,
 
-        [req.body.task, req.body.complete]);
+        [req.body.task]);
 
         res.json(result.rows[0]);
     }
@@ -72,7 +72,7 @@ app.put('/api/todos/:id', async (req, res) => {
 });
 
 app.delete('api/todos/:id', async (req, res) => {
-    
+
     try {
         const result = await client.query(`
         delete from todos
