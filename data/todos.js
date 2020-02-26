@@ -1,14 +1,14 @@
 module.exports = [
     {
-        task: 'task 1',
+        task: 'task1',
         complete: true
     }, 
     {
-        task: 'task 2',
+        task: 'task2',
         complete: false
     },
     {
-        task: 'task 3',
+        task: 'task3',
         complete: false
     }
 ];
