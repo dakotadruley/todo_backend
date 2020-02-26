@@ -53,17 +53,13 @@ app.post('/api/todos', async (req, res) => {
 });
 
 app.put('/api/todos/:id', async (req, res) => {
-    const id = req.params.id;
-    const todo = req.body;
 
     try {
         const result = await client.query(`
         update todos
         set complete (true)
         where id = ${req.params.id}
-        returning *;`
-        
-        [req.body.task, req.body.complete]);
+        returning *;`)
 
         res.json(result.rows[0]);
     }
@@ -76,6 +72,7 @@ app.put('/api/todos/:id', async (req, res) => {
 });
 
 app.delete('api/todos/:id', async (req, res) => {
+    
     try {
         const result = await client.query(`
         delete from todos
