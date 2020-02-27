@@ -14,13 +14,46 @@ app.use(cors()); // enable CORS request
 app.use(express.static('public')); // server files from /public folder
 app.use(express.json()); // enable reading incoming json data
 app.use(express.urlencoded({ extended: true })); // get certian encoded objects through
+// Auth Routes
+const createAuthRoutes = require('././lib/auth/create-auth-routes');
+
+const authRoutes = createAuthRoutes({
+    selectUser(email) {
+        return client.query(`
+            SELECT id, email, hash 
+            FROM users
+            WHERE email = $1;
+        `,
+        [email]
+        ).then(result => result.rows[0]);
+    },
+    insertUser(user, hash) {
+        return client.query(`
+            INSERT into users (email, hash)
+            VALUES ($1, $2)
+            RETURNING id, email;
+        `,
+        [user.email, hash]
+        ).then(result => result.rows[0]);
+    }
+});
+
+// before ensure auth, but after other middleware:
+app.use('/api/auth', authRoutes);
+
+// for every route, on every request, make sure there is a token
+const ensureAuth = require('./lib/auth/ensure-auth');
+
+app.use('/api', ensureAuth);
 
 app.get('/api/todos', async (req, res) => {
     try {
         const result = await client.query(`
             select * 
-            from todos;
-        `);
+            from todos
+            where user_id=$1;
+        `
+        [req.user_id]);
 
         res.json(result.rows);
     }
@@ -35,13 +68,12 @@ app.get('/api/todos', async (req, res) => {
 app.post('/api/todos', async (req, res) => {
 
     try {
-        console.log(req.body);
         const result = await client.query(`
-        insert into todos (task, complete)
-        values ($1, false)
+        insert into todos (task, complete, user_id)
+        values ($1, false, $2)
         returning *;`,
 
-        [req.body.task]);
+        [req.body.task, req.user_id]);
 
         res.json(result.rows[0]);
     }
@@ -52,6 +84,8 @@ app.post('/api/todos', async (req, res) => {
         });
     }
 });
+
+// May need to add user Id to put and delete
 
 app.put('/api/todos/:id', async (req, res) => {
 
