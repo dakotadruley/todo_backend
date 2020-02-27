@@ -13,6 +13,7 @@ app.use(morgan('dev')); // http logging
 app.use(cors()); // enable CORS request
 app.use(express.static('public')); // server files from /public folder
 app.use(express.json()); // enable reading incoming json data
+app.use(express.urlencoded({ extended: true })); // get certian encoded objects through
 
 app.get('/api/todos', async (req, res) => {
     try {
@@ -34,7 +35,7 @@ app.get('/api/todos', async (req, res) => {
 app.post('/api/todos', async (req, res) => {
 
     try {
-
+        console.log(req.body);
         const result = await client.query(`
         insert into todos (task, complete)
         values ($1, false)
@@ -57,9 +58,11 @@ app.put('/api/todos/:id', async (req, res) => {
     try {
         const result = await client.query(`
         update todos
-        set complete (true)
-        where id = ${req.params.id}
-        returning *;`)
+        set complete = true
+        where id =$1
+        returning *;`,
+
+        [req.params.id]);
 
         res.json(result.rows[0]);
     }
@@ -71,13 +74,15 @@ app.put('/api/todos/:id', async (req, res) => {
     }
 });
 
-app.delete('api/todos/:id', async (req, res) => {
+app.delete('/api/todos/:id', async (req, res) => {
 
     try {
         const result = await client.query(`
         delete from todos
-        where id = ${req.params.id}
-        returning *;`);
+        where id =$1
+        returning *;`,
+        
+        [req.params.id]);
 
         res.json(result.rows[0]);
     }
